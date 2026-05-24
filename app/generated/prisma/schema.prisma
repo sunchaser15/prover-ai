@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  submissions  Submission[]
+}
+
+model Subject {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String
+  description String
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+}
+
+model Submission {
+  id          String       @id @default(cuid())
+  title       String
+  answer      String
+  status      String       @default("checked")
+  score       Int
+  maxScore    Int          @default(24)
+  createdAt   DateTime     @default(now())
+  userId      String
+  subjectId   String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  checkResult CheckResult?
+}
+
+model CheckResult {
+  id             String     @id @default(cuid())
+  strengths      String
+  improvements   String
+  mistakes       String
+  recommendation String
+  createdAt      DateTime   @default(now())
+  submissionId   String     @unique
+  submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  text      String
+  rating    Int
+  createdAt DateTime @default(now())
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  excerpt   String
+  content   String
+  createdAt DateTime @default(now())
+}
