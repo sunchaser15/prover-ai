@@ -49,22 +49,24 @@ canvas {
 .animated-gradient-label {
   background:
     linear-gradient(100deg, #baff72 0%, #00ffd7 28%, #ffffff 48%, #8a2cff 68%, #ff6a00 100%);
-  background-size: 220% 220%;
+  background-size: 400% 400%;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: brand-gradient-flow 4.5s ease-in-out infinite;
+  animation: brand-gradient-flow 6s ease-in-out infinite;
   filter: drop-shadow(0 0 18px rgba(0, 255, 215, 0.26));
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .animated-gradient-button {
   background:
     linear-gradient(100deg, #f4fff6 0%, #7cff8a 20%, #00ffd7 42%, #9b63ff 66%, #ff812f 86%, #f4fff6 100%);
-  background-size: 240% 240%;
+  background-size: 400% 400%;
   border: 1px solid rgba(255, 255, 255, 0.34);
   color: #ffffff;
-  animation: brand-gradient-flow 4s ease-in-out infinite;
+  animation: brand-gradient-flow 5s ease-in-out infinite;
   box-shadow:
     0 0 16px rgba(255, 255, 255, 0.16),
     0 0 28px rgba(0, 255, 215, 0.54),
@@ -73,18 +75,22 @@ canvas {
   text-shadow:
     0 1px 9px rgba(0, 0, 0, 0.58),
     0 0 12px rgba(255, 255, 255, 0.24);
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .gradient-cta-text {
   background:
     linear-gradient(100deg, #ffffff 0%, #baff72 20%, #00ffd7 42%, #8a2cff 66%, #ff6a00 86%, #ffffff 100%);
-  background-size: 220% 220%;
+  background-size: 400% 400%;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: brand-gradient-flow 3.8s ease-in-out infinite;
+  animation: brand-gradient-flow 5s ease-in-out infinite;
   filter: drop-shadow(0 0 12px rgba(0, 255, 215, 0.35));
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .book-card-shine {
@@ -105,9 +111,11 @@ canvas {
   background:
     linear-gradient(125deg, rgba(186, 255, 114, 0.18), rgba(0, 255, 215, 0.16) 38%, rgba(138, 44, 255, 0.18) 72%, rgba(255, 106, 0, 0.12)),
     rgba(255, 255, 255, 0.07);
-  background-size: 180% 180%;
+  background-size: 300% 300%;
   animation: subject-gradient-flow 10s ease-in-out infinite;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .brand-wordmark {
@@ -123,12 +131,12 @@ canvas {
 .gradient-brand-text {
   background:
     linear-gradient(100deg, #ffffff 0%, #baff72 18%, #00ffd7 36%, #8a2cff 58%, #ff6a00 78%, #ffffff 100%);
-  background-size: 220% 220%;
+  background-size: 400% 400%;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: brand-gradient-flow 4s ease-in-out infinite;
+  animation: brand-gradient-flow 5s ease-in-out infinite;
   filter: drop-shadow(0 0 12px rgba(0, 255, 204, 0.42))
     drop-shadow(0 0 24px rgba(138, 44, 255, 0.36))
     drop-shadow(0 0 36px rgba(255, 106, 0, 0.26));
@@ -136,6 +144,8 @@ canvas {
     0 0 12px rgba(0, 255, 204, 0.55),
     0 0 28px rgba(138, 44, 255, 0.5),
     0 0 46px rgba(255, 106, 0, 0.42);
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .brand-wordmark-text {
