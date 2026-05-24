@@ -3,7 +3,13 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pkg from "pg";
 const { Pool } = pkg;
 
-const connectionString = process.env.DATABASE_URL ?? "";
+const connectionString =
+  process.env.DATABASE_URL ??
+  process.env.DATABASE1_DATABASE_URL ??
+  process.env.DATABASE1_URL ??
+  process.env.POSTGRES_PRISMA_URL ??
+  process.env.POSTGRES_URL ??
+  "";
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 
