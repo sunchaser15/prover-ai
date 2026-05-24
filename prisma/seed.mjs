@@ -1,9 +1,14 @@
 import { PrismaClient } from "../app/generated/prisma/index.js";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-});
+neonConfig.webSocketConstructor = ws;
+
+const connectionString = process.env.DATABASE_URL ?? "";
+const pool = new Pool({ connectionString });
+const adapter = new PrismaNeon(pool);
+
 const prisma = new PrismaClient({ adapter });
 
 const subjects = [
