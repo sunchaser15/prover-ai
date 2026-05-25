@@ -4,14 +4,27 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 
+const titlePlaceholders: Record<string, string> = {
+  russian: "Сочинение по русскому языку",
+  biology: "Задание на клеточный цикл",
+  "social-science": "Эссе по обществознанию",
+  "math-profile": "Задача на интегралы",
+  history: "Эссе об эпохе Петра I",
+  physics: "Задача по механике",
+  chemistry: "Уравнение реакции окисления",
+  "computer-science": "Алгоритм сортировки",
+  english: "Essay on technology",
+};
+
 export function SubmissionForm({
   subjects,
 }: {
-  subjects: { id: string; title: string }[];
+  subjects: { id: string; slug: string; title: string }[];
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedSlug, setSelectedSlug] = useState(subjects[0]?.slug ?? "");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +109,10 @@ export function SubmissionForm({
           name="subjectId"
           required
           className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
+          onChange={(e) => {
+            const slug = subjects.find((s) => s.id === e.target.value)?.slug ?? "";
+            setSelectedSlug(slug);
+          }}
         >
           {subjects.map((subject) => (
             <option key={subject.id} value={subject.id}>
@@ -113,7 +130,7 @@ export function SubmissionForm({
           name="title"
           required
           className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
-          placeholder="Сочинение по русскому"
+          placeholder={titlePlaceholders[selectedSlug] ?? "Название работы"}
         />
       </label>
 
