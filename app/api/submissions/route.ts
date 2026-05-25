@@ -24,12 +24,13 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       subjectId?: string;
       title?: string;
+      taskNumber?: string;
       answer?: string;
     };
 
-    if (!body.subjectId || !body.answer || body.answer.trim().length < 30) {
+    if (!body.subjectId || !body.title?.trim() || !body.taskNumber?.trim() || !body.answer?.trim()) {
       return NextResponse.json(
-        { error: "Выберите предмет и добавьте ответ не короче 30 символов." },
+        { error: "Выберите предмет, заполните название, номер задания и добавьте ответ." },
         { status: 400 }
       );
     }
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       data: {
         userId: user.id,
         subjectId: body.subjectId,
-        title: body.title?.trim() || "Новая работа",
+        title: `${body.taskNumber?.trim()} — ${body.title?.trim()}`,
         answer: body.answer.trim(),
         score: check.score,
         maxScore: check.maxScore,
