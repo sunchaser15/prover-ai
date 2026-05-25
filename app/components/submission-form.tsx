@@ -29,6 +29,18 @@ export function SubmissionForm({
   const [noPersonalData, setNoPersonalData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  async function logConsent(type: string) {
+    try {
+      await fetch("/api/consents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+    } catch {
+      // Не блокируем отправку если лог не удался
+    }
+  }
+
   function handleFiles(files: FileList | null) {
     if (!files) return;
     const newImages = Array.from(files)
@@ -75,14 +87,16 @@ export function SubmissionForm({
       return;
     }
 
-    // Если есть фото — чекбокс обязателен
-    if (images.length > 0 && !noPersonalData) {
-      setError("Подтвердите, что в файле нет персональных данных.");
+    // Чекбокс обязателен всегда
+    if (!noPersonalData) {
+      setError("Подтвердите, что ответ не содержит персональных данных.");
       setLoading(false);
       return;
     }
 
-    // Пока отправляем только текст (фото — будущий шаг)
+    // Логируем согласие
+    void logConsent(images.length > 0 ? "answer_photo" : "answer_text");
+
     const response = await fetch("/api/submissions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -212,22 +226,20 @@ export function SubmissionForm({
         </p>
       </div>
 
-      {/* Чекбокс появляется только при наличии фото */}
-      {images.length > 0 && (
-        <label className="mt-4 flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={noPersonalData}
-            onChange={(e) => setNoPersonalData(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#00FFD7]"
-          />
-          <span className="text-sm font-medium leading-6 text-white/70">
-            Подтверждаю, что в загруженных файлах{" "}
-            <span className="font-bold text-white">не содержатся персональные данные</span>{" "}
-            (ФИО, адрес, номер телефона и т.п.)
-          </span>
-        </label>
-      )}
+      {/* Чекбокс всегда виден */}
+      <label className="mt-4 flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={noPersonalData}
+          onChange={(e) => setNoPersonalData(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#00FFD7]"
+        />
+        <span className="text-sm font-medium leading-6 text-white/70">
+          Подтверждаю, что ответ{" "}
+          <span className="font-bold text-white">не содержит персональных данных</span>{" "}
+          (ФИО, адрес, номер телефона и т.п.)
+        </span>
+      </label>
 
       {error && <p className="mt-4 text-sm font-bold text-[#FF9AA4]">{error}</p>}
 

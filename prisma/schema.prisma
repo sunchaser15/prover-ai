@@ -68,3 +68,15 @@ model BlogPost {
   content   String
   createdAt DateTime @default(now())
 }
+
+model Consent {
+  id          String   @id @default(cuid())
+  // Нулл — анонимный пользователь
+  userId      String?
+  // Тип: "answer_text" | "answer_photo" | "cookie_accept" | "cookie_decline"
+  type        String
+  // IP-адрес для лога (не передаём на клиент)
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
