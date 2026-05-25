@@ -26,6 +26,7 @@ export function SubmissionForm({
   const [loading, setLoading] = useState(false);
   const [selectedSlug, setSelectedSlug] = useState(subjects[0]?.slug ?? "");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
+  const [noPersonalData, setNoPersonalData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFiles(files: FileList | null) {
@@ -70,6 +71,13 @@ export function SubmissionForm({
     // Если нет ни текста, ни фото — ошибка
     if (answerText.trim().length < 30 && images.length === 0) {
       setError("Добавьте ответ: текст (от 30 символов) или фото.");
+      setLoading(false);
+      return;
+    }
+
+    // Если есть фото — чекбокс обязателен
+    if (images.length > 0 && !noPersonalData) {
+      setError("Подтвердите, что в файле нет персональных данных.");
       setLoading(false);
       return;
     }
@@ -200,9 +208,26 @@ export function SubmissionForm({
           />
         </div>
         <p className="mt-1 text-xs text-white/40">
-          Можно вставить фото через Ctrl+V или загрузить файл. Максимум 5 фото.
+          Только изображения (jpg, png, gif и др.). Максимум 5 фото.
         </p>
       </div>
+
+      {/* Чекбокс появляется только при наличии фото */}
+      {images.length > 0 && (
+        <label className="mt-4 flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={noPersonalData}
+            onChange={(e) => setNoPersonalData(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#00FFD7]"
+          />
+          <span className="text-sm font-medium leading-6 text-white/70">
+            Подтверждаю, что в загруженных файлах{" "}
+            <span className="font-bold text-white">не содержатся персональные данные</span>{" "}
+            (ФИО, адрес, номер телефона и т.п.)
+          </span>
+        </label>
+      )}
 
       {error && <p className="mt-4 text-sm font-bold text-[#FF9AA4]">{error}</p>}
 

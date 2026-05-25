@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/app/components/logout-button";
 import { PageShell } from "@/app/components/page-shell";
+import { DashboardClient } from "@/app/components/dashboard-client";
 import { getCurrentUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
@@ -17,6 +18,16 @@ export default async function DashboardPage() {
     include: { subject: true },
     orderBy: { createdAt: "desc" },
   });
+
+  // Сериализуем даты в строки для клиента
+  const serialized = submissions.map((s) => ({
+    id: s.id,
+    title: s.title,
+    score: s.score,
+    maxScore: s.maxScore,
+    createdAt: s.createdAt.toISOString(),
+    subject: { id: s.subject.id, title: s.subject.title },
+  }));
 
   return (
     <PageShell>
@@ -44,31 +55,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {submissions.map((submission) => (
-            <Link
-              key={submission.id}
-              href={`/dashboard/submissions/${submission.id}`}
-              className="glass-card block p-5 transition-transform hover:-translate-y-1"
-            >
-              <p className="text-sm font-bold uppercase text-white/55">
-                {submission.subject.title}
-              </p>
-              <h2 className="mt-3 text-2xl font-black uppercase text-white">
-                {submission.title}
-              </h2>
-              <strong className="mt-5 block text-4xl font-black text-[#7CFF8A]">
-                {submission.score}/{submission.maxScore}
-              </strong>
-            </Link>
-          ))}
-        </div>
-
-        {submissions.length === 0 && (
-          <div className="glass-card p-6 text-white/72">
-            Пока нет работ. Начните с первой проверки.
-          </div>
-        )}
+        <DashboardClient submissions={serialized} />
       </div>
     </PageShell>
   );
