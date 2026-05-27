@@ -58,21 +58,40 @@ export async function POST(request: Request) {
     };
 
     if (AI_SUPPORTED_SUBJECTS.includes(subject.slug) && taskType) {
-      const aiResult = await createAiCheck({
-        subjectSlug: subject.slug,
-        taskType,
-        answer,
-      });
-      checkData = {
-        score: aiResult.score,
-        maxScore: aiResult.maxScore,
-        strengths: aiResult.strengths,
-        improvements: aiResult.improvements,
-        mistakes: aiResult.mistakes,
-        recommendation: aiResult.recommendation,
-        criteriaScores: aiResult.criteriaScores,
-        highlights: aiResult.highlights,
-      };
+      try {
+        const aiResult = await createAiCheck({
+          subjectSlug: subject.slug,
+          taskType,
+          answer,
+        });
+        checkData = {
+          score: aiResult.score,
+          maxScore: aiResult.maxScore,
+          strengths: aiResult.strengths,
+          improvements: aiResult.improvements,
+          mistakes: aiResult.mistakes,
+          recommendation: aiResult.recommendation,
+          criteriaScores: aiResult.criteriaScores,
+          highlights: aiResult.highlights,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "";
+        const isQuotaError =
+          message.includes("429") ||
+          message.includes("quota") ||
+          message.includes("RESOURCE_EXHAUSTED") ||
+          message.includes("rate limit");
+
+        console.warn(
+          `[AI check fallback] subject=${subject.slug} taskType=${taskType} reason=${message}`
+        );
+
+        if (!isQuotaError && process.env.NODE_ENV === "production") {
+          throw err;
+        }
+
+        checkData = createMockCheck(answer);
+      }
     } else {
       const mock = createMockCheck(answer);
       checkData = mock;
