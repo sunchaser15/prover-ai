@@ -143,6 +143,7 @@ exports.Prisma.SubmissionScalarFieldEnum = {
   status: 'status',
   score: 'score',
   maxScore: 'maxScore',
+  taskType: 'taskType',
   createdAt: 'createdAt',
   userId: 'userId',
   subjectId: 'subjectId'
@@ -154,6 +155,8 @@ exports.Prisma.CheckResultScalarFieldEnum = {
   improvements: 'improvements',
   mistakes: 'mistakes',
   recommendation: 'recommendation',
+  criteriaScores: 'criteriaScores',
+  highlights: 'highlights',
   createdAt: 'createdAt',
   submissionId: 'submissionId'
 };
@@ -175,9 +178,23 @@ exports.Prisma.BlogPostScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ConsentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  ip: 'ip',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -190,6 +207,12 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -197,7 +220,8 @@ exports.Prisma.ModelName = {
   Submission: 'Submission',
   CheckResult: 'CheckResult',
   Review: 'Review',
-  BlogPost: 'BlogPost'
+  BlogPost: 'BlogPost',
+  Consent: 'Consent'
 };
 
 /**

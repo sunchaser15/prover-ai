@@ -1,6 +1,8 @@
 import { PageShell } from "@/app/components/page-shell";
 import { getReviews } from "@/app/lib/public-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReviewsPage() {
   const reviews = await getReviews();
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireCurrentUser } from "@/app/lib/auth";
 import { createMockCheck } from "@/app/lib/mock-check";
+import { createAiCheck, AI_SUPPORTED_SUBJECTS } from "@/app/lib/ai-check";
 import { prisma } from "@/app/lib/prisma";
 
 export async function GET() {
@@ -25,31 +26,75 @@ export async function POST(request: Request) {
       subjectId?: string;
       title?: string;
       taskNumber?: string;
+      taskType?: string;
       answer?: string;
     };
 
-    if (!body.subjectId || !body.title?.trim() || !body.taskNumber?.trim() || !body.answer?.trim()) {
+    if (!body.subjectId || !body.title?.trim() || !body.answer?.trim()) {
       return NextResponse.json(
-        { error: "Выберите предмет, заполните название, номер задания и добавьте ответ." },
+        { error: "Выберите предмет, заполните название и добавьте ответ." },
         { status: 400 }
       );
     }
 
-    const check = createMockCheck(body.answer);
+    // Получаем slug предмета
+    const subject = await prisma.subject.findUnique({ where: { id: body.subjectId } });
+    if (!subject) {
+      return NextResponse.json({ error: "Предмет не найден." }, { status: 400 });
+    }
+
+    const taskType = body.taskType ?? body.taskNumber ?? "";
+    const answer = body.answer.trim();
+
+    let checkData: {
+      score: number;
+      maxScore: number;
+      strengths: string;
+      improvements: string;
+      mistakes: string;
+      recommendation: string;
+      criteriaScores?: unknown;
+      highlights?: unknown;
+    };
+
+    if (AI_SUPPORTED_SUBJECTS.includes(subject.slug) && taskType) {
+      const aiResult = await createAiCheck({
+        subjectSlug: subject.slug,
+        taskType,
+        answer,
+      });
+      checkData = {
+        score: aiResult.score,
+        maxScore: aiResult.maxScore,
+        strengths: aiResult.strengths,
+        improvements: aiResult.improvements,
+        mistakes: aiResult.mistakes,
+        recommendation: aiResult.recommendation,
+        criteriaScores: aiResult.criteriaScores,
+        highlights: aiResult.highlights,
+      };
+    } else {
+      const mock = createMockCheck(answer);
+      checkData = mock;
+    }
+
     const submission = await prisma.submission.create({
       data: {
         userId: user.id,
         subjectId: body.subjectId,
-        title: `${body.taskNumber?.trim()} — ${body.title?.trim()}`,
-        answer: body.answer.trim(),
-        score: check.score,
-        maxScore: check.maxScore,
+        title: body.title.trim(),
+        answer,
+        taskType,
+        score: checkData.score,
+        maxScore: checkData.maxScore,
         checkResult: {
           create: {
-            strengths: check.strengths,
-            improvements: check.improvements,
-            mistakes: check.mistakes,
-            recommendation: check.recommendation,
+            strengths: checkData.strengths,
+            improvements: checkData.improvements,
+            mistakes: checkData.mistakes,
+            recommendation: checkData.recommendation,
+            criteriaScores: checkData.criteriaScores ?? undefined,
+            highlights: checkData.highlights ?? undefined,
           },
         },
       },
@@ -57,7 +102,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ submission });
-  } catch {
-    return NextResponse.json({ error: "Не авторизован." }, { status: 401 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Неизвестная ошибка.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

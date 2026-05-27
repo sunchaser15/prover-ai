@@ -137,6 +137,7 @@ const DATE_OPTIONS = [
 ];
 
 export function DashboardClient({ submissions }: { submissions: Submission[] }) {
+  const [now] = useState(() => Date.now());
   const subjects = useMemo(() => {
     const map = new Map<string, string>();
     submissions.forEach((s) => map.set(s.subject.id, s.subject.title));
@@ -152,11 +153,11 @@ export function DashboardClient({ submissions }: { submissions: Submission[] }) 
       result = result.filter((s) => s.subject.id === subjectFilter);
     }
     if (dateFilter > 0) {
-      const cutoff = Date.now() - dateFilter * 24 * 60 * 60 * 1000;
+      const cutoff = now - dateFilter * 24 * 60 * 60 * 1000;
       result = result.filter((s) => new Date(s.createdAt).getTime() >= cutoff);
     }
     return result;
-  }, [submissions, subjectFilter, dateFilter]);
+  }, [submissions, subjectFilter, dateFilter, now]);
 
   // Данные для графика — только отфильтрованные, в хронологическом порядке
   const chartData = useMemo(

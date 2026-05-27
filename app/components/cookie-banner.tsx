@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { ShieldCheck, X } from "lucide-react";
 
 const STORAGE_KEY = "prover_cookie_consent";
 
 type ConsentStatus = "accepted" | "declined" | null;
+
+const CONSENT_CHANGE_EVENT = "prover_cookie_consent_change";
 
 function logCookieConsent(type: "cookie_accept" | "cookie_decline") {
   fetch("/api/consents", {
@@ -16,22 +18,28 @@ function logCookieConsent(type: "cookie_accept" | "cookie_decline") {
 }
 
 export function CookieBanner() {
-  const [status, setStatus] = useState<ConsentStatus | "loading">("loading");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as ConsentStatus | null;
-    setStatus(saved);
-  }, []);
+  const status = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener("storage", onStoreChange);
+      window.addEventListener(CONSENT_CHANGE_EVENT, onStoreChange);
+      return () => {
+        window.removeEventListener("storage", onStoreChange);
+        window.removeEventListener(CONSENT_CHANGE_EVENT, onStoreChange);
+      };
+    },
+    () => localStorage.getItem(STORAGE_KEY) as ConsentStatus | null,
+    () => "loading" as const
+  );
 
   function accept() {
     localStorage.setItem(STORAGE_KEY, "accepted");
-    setStatus("accepted");
+    window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT));
     logCookieConsent("cookie_accept");
   }
 
   function decline() {
     localStorage.setItem(STORAGE_KEY, "declined");
-    setStatus("declined");
+    window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT));
     logCookieConsent("cookie_decline");
   }
 

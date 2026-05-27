@@ -3,31 +3,29 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
+import { getTasksForSubject } from "@/app/lib/tasks";
 
-const titlePlaceholders: Record<string, string> = {
-  russian: "Сочинение по русскому языку",
-  biology: "Задание на клеточный цикл",
-  "social-science": "Эссе по обществознанию",
-  "math-profile": "Задача на интегралы",
-  history: "Эссе об эпохе Петра I",
-  physics: "Задача по механике",
-  chemistry: "Уравнение реакции окисления",
-  "computer-science": "Алгоритм сортировки",
-  english: "Essay on technology",
-};
+type Subject = { id: string; slug: string; title: string };
 
-export function SubmissionForm({
-  subjects,
-}: {
-  subjects: { id: string; slug: string; title: string }[];
-}) {
+export function SubmissionForm({ subjects }: { subjects: Subject[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedSlug, setSelectedSlug] = useState(subjects[0]?.slug ?? "");
+  const [selectedSubject, setSelectedSubject] = useState<Subject>(subjects[0]);
+  const [taskType, setTaskType] = useState<string>("");
   const [images, setImages] = useState<{ file: File; url: string }[]>([]);
   const [noPersonalData, setNoPersonalData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const tasks = selectedSubject ? getTasksForSubject(selectedSubject.slug) : null;
+
+  function handleSubjectChange(id: string) {
+    const subj = subjects.find((s) => s.id === id);
+    if (subj) {
+      setSelectedSubject(subj);
+      setTaskType(""); // сбрасываем задание при смене предмета
+    }
+  }
 
   async function logConsent(type: string) {
     try {
@@ -37,7 +35,7 @@ export function SubmissionForm({
         body: JSON.stringify({ type }),
       });
     } catch {
-      // Не блокируем отправку если лог не удался
+      // не блокируем при ошибке
     }
   }
 
@@ -80,30 +78,37 @@ export function SubmissionForm({
     const formData = new FormData(event.currentTarget);
     const answerText = (formData.get("answer") as string) ?? "";
 
-    // Если нет ни текста, ни фото — ошибка
+    if (!taskType) {
+      setError("Выберите тип задания.");
+      setLoading(false);
+      return;
+    }
+
     if (answerText.trim().length < 30 && images.length === 0) {
       setError("Добавьте ответ: текст (от 30 символов) или фото.");
       setLoading(false);
       return;
     }
 
-    // Чекбокс обязателен всегда
     if (!noPersonalData) {
       setError("Подтвердите, что ответ не содержит персональных данных.");
       setLoading(false);
       return;
     }
 
-    // Логируем согласие
     void logConsent(images.length > 0 ? "answer_photo" : "answer_text");
+
+    // Формируем название автоматически из предмета + задания
+    const taskLabel = tasks?.find((t) => t.value === taskType)?.label ?? taskType;
+    const title = `${selectedSubject.title} — ${taskLabel}`;
 
     const response = await fetch("/api/submissions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        subjectId: formData.get("subjectId"),
-        title: formData.get("title"),
-        taskNumber: formData.get("taskNumber"),
+        subjectId: selectedSubject.id,
+        title,
+        taskType,
         answer: answerText || `[Фото ответа: ${images.length} шт.]`,
       }),
     });
@@ -125,16 +130,15 @@ export function SubmissionForm({
 
   return (
     <form onSubmit={onSubmit} className="glass-card p-6">
+      {/* Предмет */}
       <label className="block">
         <span className="text-sm font-bold uppercase text-white/60">Предмет</span>
         <select
           name="subjectId"
           required
           className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
-          onChange={(e) => {
-            const slug = subjects.find((s) => s.id === e.target.value)?.slug ?? "";
-            setSelectedSlug(slug);
-          }}
+          onChange={(e) => handleSubjectChange(e.target.value)}
+          value={selectedSubject?.id ?? ""}
         >
           {subjects.map((subject) => (
             <option key={subject.id} value={subject.id}>
@@ -144,34 +148,44 @@ export function SubmissionForm({
         </select>
       </label>
 
+      {/* Тип задания */}
       <label className="mt-5 block">
         <span className="text-sm font-bold uppercase text-white/60">
-          Название <span className="text-[#FF9AA4]">*</span>
+          Тип задания <span className="text-[#FF9AA4]">*</span>
         </span>
-        <input
-          name="title"
-          required
-          className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
-          placeholder={titlePlaceholders[selectedSlug] ?? "Название работы"}
-        />
+        {tasks ? (
+          <select
+            name="taskType"
+            required
+            className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
+            value={taskType}
+            onChange={(e) => setTaskType(e.target.value)}
+          >
+            <option value="" disabled>
+              Выберите задание...
+            </option>
+            {tasks.map((task) => (
+              <option key={task.value} value={task.value}>
+                {task.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            name="taskType"
+            required
+            className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
+            placeholder="Например: 27"
+            value={taskType}
+            onChange={(e) => setTaskType(e.target.value)}
+          />
+        )}
       </label>
 
-      <label className="mt-5 block">
-        <span className="text-sm font-bold uppercase text-white/60">
-          Номер задания <span className="text-[#FF9AA4]">*</span>
-        </span>
-        <input
-          name="taskNumber"
-          required
-          className="mt-2 w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
-          placeholder="Например: 27"
-        />
-      </label>
-
+      {/* Ответ */}
       <div className="mt-5">
         <span className="text-sm font-bold uppercase text-white/60">Ответ</span>
 
-        {/* Превью загруженных фото */}
         {images.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-3">
             {images.map((img, i) => (
@@ -202,7 +216,6 @@ export function SubmissionForm({
             className="w-full rounded-md border border-white/15 bg-black/35 px-4 py-3 text-white outline-none focus:border-[#00FFD7]"
             placeholder="Вставьте развёрнутый ответ или фото (Ctrl+V)..."
           />
-          {/* Кнопка загрузки фото */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -226,7 +239,7 @@ export function SubmissionForm({
         </p>
       </div>
 
-      {/* Чекбокс всегда виден */}
+      {/* Чекбокс */}
       <label className="mt-4 flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"

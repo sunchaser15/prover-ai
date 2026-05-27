@@ -2,6 +2,8 @@ import Link from "next/link";
 import { PageShell } from "@/app/components/page-shell";
 import { getBlogPosts } from "@/app/lib/public-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPage() {
   const posts = await getBlogPosts();
 

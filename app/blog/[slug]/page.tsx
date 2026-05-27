@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { PageShell } from "@/app/components/page-shell";
 import { getBlogPost } from "@/app/lib/public-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPostPage({
   params,
 }: {
