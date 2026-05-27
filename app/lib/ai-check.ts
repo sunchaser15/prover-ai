@@ -94,7 +94,7 @@ async function createOpenRouterCheck({
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
       "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000",
-      "X-Title": "PROверь",
+      "X-Title": "Prover AI",
     },
     body: JSON.stringify({
       model,
