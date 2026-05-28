@@ -6,7 +6,17 @@ const SESSION_COOKIE = "prover_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 14;
 
 function getSecret() {
-  return process.env.SESSION_SECRET ?? "dev-session-secret-change-me";
+  const secret = process.env.SESSION_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET is required in production.");
+  }
+
+  return "dev-session-secret-change-me";
 }
 
 function sign(value: string) {

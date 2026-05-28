@@ -7,6 +7,21 @@ import { getTasksForSubject } from "@/app/lib/tasks";
 
 type Subject = { id: string; slug: string; title: string };
 
+function fileToDataUrl(file: File) {
+  return new Promise<{ name: string; mimeType: string; dataUrl: string }>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        name: file.name,
+        mimeType: file.type,
+        dataUrl: reader.result?.toString() ?? "",
+      });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function SubmissionForm({ subjects }: { subjects: Subject[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -102,6 +117,15 @@ export function SubmissionForm({ subjects }: { subjects: Subject[] }) {
     const taskLabel = tasks?.find((t) => t.value === taskType)?.label ?? taskType;
     const title = `${selectedSubject.title} — ${taskLabel}`;
 
+    let encodedImages: Awaited<ReturnType<typeof fileToDataUrl>>[] = [];
+    try {
+      encodedImages = await Promise.all(images.map((image) => fileToDataUrl(image.file)));
+    } catch {
+      setError("Не удалось подготовить изображения к отправке.");
+      setLoading(false);
+      return;
+    }
+
     const response = await fetch("/api/submissions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -110,6 +134,7 @@ export function SubmissionForm({ subjects }: { subjects: Subject[] }) {
         title,
         taskType,
         answer: answerText || `[Фото ответа: ${images.length} шт.]`,
+        images: encodedImages,
       }),
     });
     const payload = (await response.json()) as {

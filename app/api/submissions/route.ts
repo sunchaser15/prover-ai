@@ -1,8 +1,40 @@
 import { NextResponse } from "next/server";
 import { requireCurrentUser } from "@/app/lib/auth";
 import { createMockCheck } from "@/app/lib/mock-check";
-import { createAiCheck, AI_SUPPORTED_SUBJECTS } from "@/app/lib/ai-check";
+import { createAiCheck, AI_SUPPORTED_SUBJECTS, type AiInputImage } from "@/app/lib/ai-check";
 import { prisma } from "@/app/lib/prisma";
+
+const MAX_IMAGE_COUNT = 5;
+const MAX_IMAGE_DATA_URL_LENGTH = 6_000_000;
+
+function parseImages(images: unknown): AiInputImage[] {
+  if (!Array.isArray(images)) {
+    return [];
+  }
+
+  return images.slice(0, MAX_IMAGE_COUNT).flatMap((image) => {
+    if (!image || typeof image !== "object") {
+      return [];
+    }
+
+    const candidate = image as Partial<AiInputImage>;
+    if (
+      typeof candidate.dataUrl !== "string" ||
+      typeof candidate.mimeType !== "string" ||
+      !candidate.mimeType.startsWith("image/") ||
+      !candidate.dataUrl.startsWith(`data:${candidate.mimeType};base64,`) ||
+      candidate.dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH
+    ) {
+      return [];
+    }
+
+    return [{
+      name: typeof candidate.name === "string" ? candidate.name : undefined,
+      mimeType: candidate.mimeType,
+      dataUrl: candidate.dataUrl,
+    }];
+  });
+}
 
 export async function GET() {
   try {
@@ -28,6 +60,7 @@ export async function POST(request: Request) {
       taskNumber?: string;
       taskType?: string;
       answer?: string;
+      images?: unknown;
     };
 
     if (!body.subjectId || !body.title?.trim() || !body.answer?.trim()) {
@@ -45,6 +78,7 @@ export async function POST(request: Request) {
 
     const taskType = body.taskType ?? body.taskNumber ?? "";
     const answer = body.answer.trim();
+    const images = parseImages(body.images);
 
     let checkData: {
       score: number;
@@ -63,6 +97,7 @@ export async function POST(request: Request) {
           subjectSlug: subject.slug,
           taskType,
           answer,
+          images,
         });
         checkData = {
           score: aiResult.score,

@@ -17,6 +17,12 @@ export type Highlight = {
   type: "positive" | "negative" | "neutral";
 };
 
+export type AiInputImage = {
+  name?: string;
+  mimeType: string;
+  dataUrl: string;
+};
+
 export type AiCheckResult = {
   score: number;
   maxScore: number;
@@ -52,12 +58,18 @@ function getSystemPrompt(subjectSlug: string, taskType: string): string | null {
   return null;
 }
 
+function getImageBase64(image: AiInputImage) {
+  const [, data = ""] = image.dataUrl.split(",", 2);
+  return data;
+}
+
 export async function createAiCheck(params: {
   subjectSlug: string;
   taskType: string;
   answer: string;
+  images?: AiInputImage[];
 }): Promise<AiCheckResult> {
-  const { subjectSlug, taskType, answer } = params;
+  const { subjectSlug, taskType, answer, images = [] } = params;
   const systemPrompt = getSystemPrompt(subjectSlug, taskType);
 
   if (!systemPrompt) {
@@ -65,11 +77,11 @@ export async function createAiCheck(params: {
   }
 
   if (process.env.OPENROUTER_API_KEY) {
-    return createOpenRouterCheck({ systemPrompt, answer });
+    return createOpenRouterCheck({ systemPrompt, answer, images });
   }
 
   if (process.env.GEMINI_API_KEY) {
-    return createGeminiCheck({ systemPrompt, answer });
+    return createGeminiCheck({ systemPrompt, answer, images });
   }
 
   throw new Error("OPENROUTER_API_KEY или GEMINI_API_KEY не настроен.");
@@ -78,16 +90,27 @@ export async function createAiCheck(params: {
 async function createOpenRouterCheck({
   systemPrompt,
   answer,
+  images,
 }: {
   systemPrompt: string;
   answer: string;
+  images: AiInputImage[];
 }): Promise<AiCheckResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY не настроен.");
   }
 
-  const model = process.env.OPENROUTER_MODEL ?? "google/gemma-4-31b-it:free";
+  const model = process.env.OPENROUTER_MODEL ??
+    (images.length > 0 ? "google/gemini-2.0-flash-001" : "google/gemma-4-31b-it:free");
+  const userContent = [
+    { type: "text", text: answer },
+    ...images.map((image) => ({
+      type: "image_url",
+      image_url: { url: image.dataUrl },
+    })),
+  ];
+
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -100,7 +123,7 @@ async function createOpenRouterCheck({
       model,
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: answer },
+        { role: "user", content: images.length > 0 ? userContent : answer },
       ],
       temperature: 0.3,
       response_format: { type: "json_object" },
@@ -122,9 +145,11 @@ async function createOpenRouterCheck({
 async function createGeminiCheck({
   systemPrompt,
   answer,
+  images,
 }: {
   systemPrompt: string;
   answer: string;
+  images: AiInputImage[];
 }): Promise<AiCheckResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -146,7 +171,15 @@ async function createGeminiCheck({
         },
         contents: [
           {
-            parts: [{ text: answer }],
+            parts: [
+              { text: answer },
+              ...images.map((image) => ({
+                inlineData: {
+                  mimeType: image.mimeType,
+                  data: getImageBase64(image),
+                },
+              })),
+            ],
             role: "user",
           },
         ],

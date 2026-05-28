@@ -10,29 +10,23 @@
     "postinstall": "prisma generate",
     "db:init": "prisma db push && node prisma/seed.mjs",
     "db:push": "prisma db push",
-    "db:seed": "node prisma/seed.mjs"
+    "db:seed": "node prisma/seed.mjs",
+    "test": "node --test tests/source-contract.test.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
-    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.10.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "shader-park-core": "^0.2.8",
-    "shaders": "^2.5.127",
-    "ws": "^8.21.0"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
